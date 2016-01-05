@@ -1,0 +1,3 @@
+version=3
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/python-azure-$1\.tar\.gz/ \
+  https://github.com/Azure/azure-sdk-for-python/releases .*/v?(\d\S*)\.tar\.gz

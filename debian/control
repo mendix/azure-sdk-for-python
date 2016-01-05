@@ -1,0 +1,37 @@
+Source: python-azure
+Section: python
+Priority: optional
+Maintainer: Stuart Bishop (Work) <stuart.bishop@canonical.com>
+Build-Depends:
+    debhelper (>= 8),
+    dh-python,
+    python-all (>= 2.7),
+    python-setuptools,
+    python3-all,
+    python3-setuptools
+Standards-Version: 3.9.5
+Homepage: https://github.com/WindowsAzure/azure-sdk-for-python
+X-Python-Version: >= 2.7
+X-Python3-Version: >= 3.2
+Vcs-Git: https://github.com/Azure/azure-sdk-for-python.git
+Vcs-Browser: https://github.com/Azure/azure-sdk-for-python
+
+Package: python-azure
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}
+Description: Microsoft Azure SDK for Python
+ Python packages that make it easy to access the Microsoft Azure cloud
+ computing platform components such as ServiceManagement, Storage, and
+ ServiceBus.
+ .
+ This is the Python 2 version of the package.
+
+Package: python3-azure
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Description: Microsoft Azure SDK for Python
+ Python packages that make it easy to access the Microsoft Azure cloud
+ computing platform components such as ServiceManagement, Storage, and
+ ServiceBus.
+ .
+ This is the Python 3 version of the package.

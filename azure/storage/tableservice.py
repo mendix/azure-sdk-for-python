@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,6 +39,7 @@ from azure.storage import (
     StorageSASAuthentication,
     StorageTableSharedKeyAuthentication,
     TableSharedAccessPermissions,
+    StorageConnectionParameters,
     _convert_entity_to_xml,
     _convert_etree_element_to_entity,
     _convert_etree_element_to_table,
@@ -62,7 +63,8 @@ class TableService(_StorageClient):
 
     def __init__(self, account_name=None, account_key=None, protocol='https',
                  host_base=TABLE_SERVICE_HOST_BASE, dev_host=DEV_TABLE_HOST,
-                 timeout=DEFAULT_HTTP_TIMEOUT, sas_token=None):
+                 timeout=DEFAULT_HTTP_TIMEOUT, sas_token=None, connection_string=None,
+                 request_session=None):
         '''
         account_name:
             your storage account name, required for all operations.
@@ -79,9 +81,27 @@ class TableService(_StorageClient):
             Optional. Timeout for the http request, in seconds.
         sas_token:
             Optional. Token to use to authenticate with shared access signature.
+        connection_string:
+            Optional. If specified, the first four parameters (account_name,
+            account_key, protocol, host_base) may be overridden
+            by values specified in the connection_string. The next three parameters
+            (dev_host, timeout, sas_token) cannot be specified with a
+            connection_string. See
+            http://azure.microsoft.com/en-us/documentation/articles/storage-configure-connection-string/
+            for the connection string format.
+        request_session:
+            Optional. Session object to use for http requests. If this is
+            specified, it replaces the default use of httplib.
         '''
+        if connection_string is not None:
+            connection_params = StorageConnectionParameters(connection_string)
+            account_name = connection_params.account_name
+            account_key = connection_params.account_key
+            protocol = connection_params.protocol.lower()
+            host_base = connection_params.host_base_table
+            
         super(TableService, self).__init__(
-            account_name, account_key, protocol, host_base, dev_host, timeout, sas_token)
+            account_name, account_key, protocol, host_base, dev_host, timeout, sas_token, request_session)
 
         if self.account_key:
             self.authentication = StorageTableSharedKeyAuthentication(

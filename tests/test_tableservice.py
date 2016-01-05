@@ -17,6 +17,9 @@
 import base64
 import time
 import unittest
+import sys
+import locale
+import os
 
 from datetime import datetime, timedelta
 from dateutil.tz import tzutc, tzoffset
@@ -39,6 +42,7 @@ from azure.storage.sharedaccesssignature import SharedAccessPolicy
 from util import (
     AzureTestCase,
     credentials,
+    create_storage_service,
     getUniqueName,
     set_service_options,
 )
@@ -52,9 +56,11 @@ MAX_RETRY = 60
 class TableServiceTest(AzureTestCase):
 
     def setUp(self):
-        self.ts = TableService(credentials.getStorageServicesName(),
-                               credentials.getStorageServicesKey())
-        set_service_options(self.ts)
+        self.ts = create_storage_service(
+            TableService,
+            credentials.getStorageServicesName(),
+            credentials.getStorageServicesKey(),
+        )
 
         self.table_name = getUniqueName('uttable')
         self.additional_table_names = []
@@ -1348,6 +1354,21 @@ class TableServiceTest(AzureTestCase):
         self.assertIsNotNone(resp)
         self.assertEqual(resp.date, local_date.astimezone(tzutc()))
         self.assertEqual(resp.date.astimezone(local_tz), local_date)
+
+    def test_locale(self):
+        # Arrange
+        culture = 'es_ES.utf8' if not os.name is "nt" else "Spanish_Spain"
+        locale.setlocale(locale.LC_ALL, culture)
+        e = None
+
+        # Act
+        try:
+            resp = self.ts.query_tables()
+        except:
+            e = sys.exc_info()[0]
+
+        # Assert
+        self.assertIsNone(e)
 
     def test_sas_query(self):
         # Arrange

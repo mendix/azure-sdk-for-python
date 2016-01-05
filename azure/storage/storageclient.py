@@ -1,4 +1,4 @@
-#-------------------------------------------------------------------------
+﻿#-------------------------------------------------------------------------
 # Copyright (c) Microsoft.  All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,7 +43,7 @@ class _StorageClient(object):
 
     def __init__(self, account_name=None, account_key=None, protocol='https',
                  host_base='', dev_host='', timeout=DEFAULT_HTTP_TIMEOUT,
-                 sas_token=None):
+                 sas_token=None, request_session=None):
         '''
         account_name:
             your storage account name, required for all operations.
@@ -60,11 +60,14 @@ class _StorageClient(object):
             Optional. Timeout for the http request, in seconds.
         sas_token:
             Optional. Token to use to authenticate with shared access signature.
+        request_session:
+            Optional. Session object to use for http requests. If this is
+            specified, it replaces the default use of httplib.
         '''
         self.account_name = account_name
         self.account_key = account_key
         self.requestid = None
-        self.protocol = protocol
+        self.protocol = protocol.lower()
         self.host_base = host_base
         self.dev_host = dev_host
         self.sas_token = sas_token
@@ -99,7 +102,9 @@ class _StorageClient(object):
         self._httpclient = _HTTPClient(
             service_instance=self,
             protocol=self.protocol,
-            timeout=timeout)
+            timeout=timeout,
+            request_session=request_session,
+        )
         self._batchclient = None
         self._filter = self._perform_request_worker
 

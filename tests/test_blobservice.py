@@ -64,6 +64,7 @@ from azure.storage.sharedaccesssignature import SharedAccessPolicy
 from util import (
     AzureTestCase,
     credentials,
+    create_storage_service,
     getUniqueName,
     set_service_options,
     )
@@ -75,16 +76,20 @@ from util import (
 class BlobServiceTest(AzureTestCase):
 
     def setUp(self):
-        self.bs = BlobService(credentials.getStorageServicesName(),
-                              credentials.getStorageServicesKey())
-        set_service_options(self.bs)
+        self.bs = create_storage_service(
+            BlobService,
+            credentials.getStorageServicesName(),
+            credentials.getStorageServicesKey(),
+        )
 
         remote_storage_service_name = credentials.getRemoteStorageServicesName()
         remote_storage_service_key = credentials.getRemoteStorageServicesKey()
         if remote_storage_service_key and remote_storage_service_name:
-            self.bs2 = BlobService(credentials.getRemoteStorageServicesName(),
-                                   credentials.getRemoteStorageServicesKey())
-            set_service_options(self.bs2)
+            self.bs2 = create_storage_service(
+                BlobService,
+                remote_storage_service_name,
+                remote_storage_service_key,
+            )
         else:
             print("Remote Storage Account not configured. Add " \
                   "'remotestorageserviceskey' and 'remotestorageservicesname'" \
@@ -354,6 +359,23 @@ class BlobServiceTest(AzureTestCase):
         self.assertEqual(bs.account_key, credentials.getStorageServicesKey())
         self.assertEqual(bs.is_emulated, False)
 
+    def test_create_blob_service_connection_string(self):
+        # Arrange
+        connection_string = 'DefaultEndpointsProtocol={};AccountName={};AccountKey={}'.format(
+                            'http', credentials.getStorageServicesName(),
+                            credentials.getStorageServicesKey())
+        
+        # Act
+        bs = BlobService(connection_string = connection_string)
+        
+        # Assert
+        self.assertIsNotNone(bs)
+        self.assertEqual(bs.account_name, credentials.getStorageServicesName())
+        self.assertEqual(bs.account_key, credentials.getStorageServicesKey())
+        self.assertEqual(bs.protocol, 'http')
+        self.assertEqual(bs.host_base, BLOB_SERVICE_HOST_BASE)
+        self.assertFalse(bs.is_emulated)
+        
     #--Test cases for containers -----------------------------------------
     def test_create_container_no_options(self):
         # Arrange

@@ -19,7 +19,8 @@ import types
 from datetime import datetime
 from dateutil import parser
 from dateutil.tz import tzutc
-from time import sleep
+from time import sleep, time
+from wsgiref.handlers import format_date_time
 from azure import (WindowsAzureData,
                    WindowsAzureError,
                    METADATA_NS,
@@ -41,7 +42,10 @@ from azure import (WindowsAzureData,
                    _get_etree_text,
                    ETree,
                    _ETreeXmlToObject,
-                   )
+                   BLOB_SERVICE_HOST_BASE,
+                   TABLE_SERVICE_HOST_BASE,
+                   QUEUE_SERVICE_HOST_BASE,
+                  )
 
 # x-ms-version for storage service.
 X_MS_VERSION = '2014-02-14'
@@ -535,7 +539,7 @@ def _update_storage_blob_header(request, authentication):
     ''' add additional headers for storage blob request. '''
 
     request = _update_storage_header(request)
-    current_time = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+    current_time = format_date_time(time())
     request.headers.append(('x-ms-date', current_time))
     request.headers.append(
         ('Content-Type', 'application/octet-stream Charset=UTF-8'))
@@ -560,7 +564,7 @@ def _update_storage_table_header(request, content_type='application/atom+xml'):
             request.headers.append(('Content-Type', content_type))
     request.headers.append(('DataServiceVersion', '2.0;NetFx'))
     request.headers.append(('MaxDataServiceVersion', '2.0;NetFx'))
-    current_time = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
+    current_time = format_date_time(time())
     request.headers.append(('x-ms-date', current_time))
     request.headers.append(('Date', current_time))
     return request.headers
@@ -1277,6 +1281,31 @@ class StorageTableSharedKeyAuthentication(_StorageSharedKeyAuthentication):
 class StorageNoAuthentication(object):
     def sign_request(self, request):
         pass
+
+
+class StorageConnectionParameters(object):
+    '''
+    Extract connection parameters from a connection string.
+    
+    This is based on http://azure.microsoft.com/en-us/documentation/articles/storage-configure-connection-string/ .
+       
+    NOTE "(Blob|Table|Queue|File)Endpoint" are not supported.
+         "SharedAccessSignature" is not supported.
+         dev_host, timeout, and sas_token cannot be specified with a connection string.
+    '''
+    def __init__(self, connection_string = ''):
+        connection_params = dict(s.split('=',1) for s in connection_string.split(';'))
+
+        self.account_name = connection_params.get('AccountName', None)
+        self.account_key = connection_params.get('AccountKey', None)
+        self.protocol = connection_params.get('DefaultEndpointsProtocol', 'https').lower()
+        endpoint_suffix = connection_params.get('EndpointSuffix', None)
+        self.host_base_blob = BLOB_SERVICE_HOST_BASE if endpoint_suffix is None \
+                              else ".blob.{}".format(endpoint_suffix)
+        self.host_base_table = TABLE_SERVICE_HOST_BASE if endpoint_suffix is None \
+                               else ".table.{}".format(endpoint_suffix)
+        self.host_base_queue = QUEUE_SERVICE_HOST_BASE if endpoint_suffix is None \
+                               else ".queue.{}".format(endpoint_suffix)
 
 
 # make these available just from storage.
